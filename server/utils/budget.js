@@ -1,12 +1,11 @@
-const { Configuration, OpenAIApi } = require('openai');
-
+const OpenAI = require("openai");
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 let openaiClient = null;
 if (OPENAI_API_KEY) {
-  const conf = new Configuration({ apiKey: OPENAI_API_KEY });
-  openaiClient = new OpenAIApi(conf);
+  openaiClient = new OpenAI({ apiKey: OPENAI_API_KEY });
 }
+
 
 /**
  * Basic heuristic budget generator
