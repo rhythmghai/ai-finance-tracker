@@ -13,7 +13,7 @@ export default function Subscriptions() {
 
   async function load() {
     try {
-      const res = await API.get("/subscriptions");
+      const res = await API.get("/api/subscriptions");
       setList(res.data || []);
     } catch (err) {
       console.error("Error loading subscriptions:", err);
@@ -26,7 +26,7 @@ export default function Subscriptions() {
     if (!form.name || !form.provider || !form.monthlyCost) return;
 
     try {
-      await API.post("/subscriptions", {
+      await API.post("/api/subscriptions", {
         name: form.name,
         provider: form.provider,
         monthlyCost: Number(form.monthlyCost),
