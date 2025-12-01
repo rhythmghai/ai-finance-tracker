@@ -11,32 +11,32 @@ export default function Bills() {
   });
 
   async function load() {
-  try {
-    const res = await API.get("/api/bills");
-    setList(res.data || []);
-  } catch (err) {
-    console.error("Error loading bills:", err);
+    try {
+      const res = await API.get("/api/bills");
+      setList(res.data || []);
+    } catch (err) {
+      console.error("Error loading bills:", err);
+    }
+    setLoading(false);
   }
-  setLoading(false);
-}
 
-async function add(e) {
-  e.preventDefault();
-  if (!form.name || !form.amount) return;
+  async function add(e) {
+    e.preventDefault();
+    if (!form.name || !form.amount) return;
 
-  try {
-    await API.post("/api/bills", {
-      name: form.name,
-      amount: Number(form.amount),
-    });
+    try {
+      await API.post("/api/bills", {
+        name: form.name,
+        amount: Number(form.amount),
+      });
 
-    setForm({ name: "", amount: "" });
-    load();
-  } catch (err) {
-    console.error("Error adding bill:", err);
-    alert("Error adding bill");
+      setForm({ name: "", amount: "" });
+      load();
+    } catch (err) {
+      console.error("Error adding bill:", err);
+      alert("Error adding bill");
+    }
   }
-}
 
   useEffect(() => {
     load();
