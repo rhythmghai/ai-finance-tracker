@@ -11,6 +11,7 @@ export default function Dashboard() {
 
   const [txs, setTxs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
 
   async function loadTxs() {
     try {
@@ -23,7 +24,6 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    // redirect if not logged in
     if (!localStorage.getItem("token")) {
       navigate("/");
       return;
@@ -34,6 +34,107 @@ export default function Dashboard() {
 
   function logout() {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  }
+
+  return (
+    <div
+      className={`p-6 min-h-screen transition ${
+        darkMode
+          ? "bg-gray-900 text-white"
+          : "bg-gradient-to-b from-blue-50 via-pink-50 to-green-50"
+      }`}
+    >
+      {/* HEADER */}
+      <header className="flex items-center justify-between mb-6">
+        <h1
+          className={`text-3xl font-bold drop-shadow-sm ${
+            darkMode ? "text-white" : "text-gray-700"
+          }`}
+        >
+          Finance Tracker 💰
+        </h1>
+
+        <div className="flex items-center gap-3">
+          {/* DARK MODE TOGGLE */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="py-2 px-3 rounded-full bg-purple-300 hover:bg-purple-400 dark:bg-purple-600 dark:hover:bg-purple-700 shadow transition"
+          >
+            {darkMode ? "Light Mode ☀️" : "Dark Mode 🌙"}
+          </button>
+
+          {/* LOGOUT BUTTON */}
+          <button
+            onClick={logout}
+            className="py-2 px-4 rounded-full bg-pink-200 hover:bg-pink-300 shadow-md transition"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* MAIN GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* LEFT COLUMN */}
+        <div className="space-y-4 md:col-span-1">
+          <AddTransaction onAdded={loadTxs} />
+          <Subscriptions />
+          <Bills />
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div className="md:col-span-2 space-y-4">
+          <Budget />
+
+          {/* TRANSACTIONS CARD */}
+          <div
+            className={`p-4 rounded-2xl shadow pastel-card border ${
+              darkMode
+                ? "bg-gray-800/70 text-white border-gray-700"
+                : "bg-white/80 backdrop-blur-md"
+            }`}
+          >
+            <h3 className="font-semibold mb-3">Recent Transactions</h3>
+
+            {loading ? (
+              <p className="text-sm opacity-70">Loading...</p>
+            ) : txs.length ? (
+              txs.map((tx) => (
+                <div
+                  key={tx._id}
+                  className="flex justify-between items-center border-b py-2 last:border-b-0"
+                >
+                  <div>
+                    <div className="font-medium capitalize">
+                      {tx.category} • {tx.type}
+                    </div>
+                    {tx.note && (
+                      <div className="text-sm opacity-70">{tx.note}</div>
+                    )}
+                  </div>
+
+                  <div
+                    className={`font-semibold ${
+                      tx.type === "expense"
+                        ? "text-red-500"
+                        : "text-green-500"
+                    }`}
+                  >
+                    ₹{tx.amount}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm opacity-70">No transactions yet</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
     localStorage.removeItem("user");
     navigate("/");
   }
