@@ -1,17 +1,35 @@
-const express = require('express');
-const Bill = require('../models/Bill');
-const auth = require('./_auth');
+// server/routes/bills.js
+const express = require("express");
+const Bill = require("../models/Bill");
+const auth = require("./_auth");
+
 const router = express.Router();
 
-router.post('/', auth, async (req, res) => {
-  const b = new Bill({ ...req.body, user: req.userId });
-  await b.save();
-  res.json(b);
+// CREATE BILL
+router.post("/", auth, async (req, res) => {
+  try {
+    const bill = new Bill({
+      ...req.body,
+      user: req.userId, // added by _auth.js
+    });
+
+    await bill.save();
+    return res.json(bill);
+  } catch (err) {
+    console.error("Error creating bill:", err);
+    return res.status(500).json({ error: "Server error while creating bill" });
+  }
 });
 
-router.get('/', auth, async (req, res) => {
-  const list = await Bill.find({ user: req.userId });
-  res.json(list);
+// GET ALL BILLS BY USER
+router.get("/", auth, async (req, res) => {
+  try {
+    const list = await Bill.find({ user: req.userId }).sort({ createdAt: -1 });
+    return res.json(list);
+  } catch (err) {
+    console.error("Error fetching bills:", err);
+    return res.status(500).json({ error: "Server error while fetching bills" });
+  }
 });
 
 module.exports = router;
