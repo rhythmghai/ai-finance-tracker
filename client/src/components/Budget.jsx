@@ -31,9 +31,116 @@ export default function Budget() {
     load();
   }, []);
 
-  // --- AI Budget Generation ---
   async function generateBudget() {
-    if (!savingGoal) {
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    const res = await API.post("/api/budget/generate", {
+      userId: user.id,
+      targetSavings: Number(savingGoal),
+    });
+
+    setBudget(res.data);
+  }
+
+  if (loading)
+    return <div className="card animate-pulse p-4">Loading budget...</div>;
+
+  return (
+    <div
+      className="p-6 rounded-3xl shadow-xl border bg-[var(--card)] text-[var(--text)]"
+      style={{
+        background: `linear-gradient(135deg, var(--gradient-start), var(--gradient-end))`,
+      }}
+    >
+      <h2 className="text-2xl font-bold mb-4">💡 AI-Powered Smart Budget</h2>
+
+      {/* Input */}
+      <div className="mb-6 bg-[var(--card)] p-4 rounded-2xl shadow-md">
+        <p className="mb-1 text-[var(--subtext)] text-sm">
+          How much would you like to save monthly?
+        </p>
+        <div className="flex gap-3">
+          <input
+            type="number"
+            placeholder="Enter amount"
+            value={savingGoal}
+            onChange={(e) => setSavingGoal(e.target.value)}
+            className="p-2 rounded-lg border w-full bg-transparent"
+          />
+          <button
+            onClick={generateBudget}
+            className="px-4 py-2 rounded-lg bg-pink-400 hover:bg-pink-500 text-white transition"
+          >
+            Generate
+          </button>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="grid md:grid-cols-2 gap-6 mt-4">
+        
+        {/* Left side: Budget numbers */}
+        <div className="bg-[var(--card)] p-4 rounded-2xl shadow-lg border">
+          <h3 className="font-semibold text-lg mb-2">📊 Budget Summary</h3>
+
+          <p>Income: ₹{budget.income}</p>
+          <p>Avg Monthly Expense: ₹{budget.avgExpense}</p>
+          <p>Savings Goal: ₹{budget.suggestedSavings}</p>
+          <p>Spendable: ₹{budget.available}</p>
+
+          <h4 className="mt-4 mb-1 font-semibold">Recommended Allocation</h4>
+          <ul className="text-sm">
+            {Object.entries(budget.suggested).map(([k, v]) => (
+              <li key={k} className="capitalize">
+                {k}: ₹{v}
+              </li>
+            ))}
+          </ul>
+
+          <h4 className="mt-4 mb-1 font-semibold">
+            Category-Wise Smart Allocation
+          </h4>
+          <ul className="text-sm">
+            {Object.entries(budget.suggestedByCategory).map(([k, v]) => (
+              <li key={k} className="capitalize">
+                {k}: ₹{v}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Right side: Pie chart */}
+        <div className="bg-[var(--card)] p-4 rounded-2xl shadow-lg border">
+          <h3 className="font-semibold text-lg mb-2">🧁 Spending Breakdown</h3>
+
+          {summary.length ? (
+            <SpendingPie data={summary} />
+          ) : (
+            <p className="text-sm text-[var(--subtext)]">No spending data yet</p>
+          )}
+        </div>
+      </div>
+
+      {/* Forecast */}
+      <div className="bg-[var(--card)] p-4 rounded-2xl shadow-lg border mt-6">
+        <h3 className="font-semibold text-lg mb-2">
+          📈 Next Month Expense Forecast
+        </h3>
+
+        {predict?.history ? (
+          <ForecastBar history={predict.history} />
+        ) : (
+          <p className="text-sm text-[var(--subtext)]">No history yet</p>
+        )}
+
+        <p className="mt-2 text-lg">
+          Predicted:{" "}
+          <span className="font-bold text-pink-500">₹{predict?.predicted}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
       alert("Please enter a saving goal");
       return;
     }
