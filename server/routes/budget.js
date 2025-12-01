@@ -1,3 +1,4 @@
+// server/routes/budget.js
 const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/Transaction");
@@ -15,14 +16,25 @@ async function getMonthlyHistory(userId, months = 6) {
     {
       $match: {
         user: userId,
-        date: { $gte: start }
+        $or: [
+          { date: { $gte: start } },        // your model field
+          { createdAt: { $gte: start } }    // fallback for old transactions
+        ]
       }
     },
     {
       $project: {
         amount: 1,
         type: 1,
-        month: { $dateToString: { format: "%Y-%m", date: "$date" } }
+        // ensure month uses whichever field exists
+        month: {
+          $dateToString: {
+            format: "%Y-%m",
+            date: {
+              $ifNull: ["$date", "$createdAt"]
+            }
+          }
+        }
       }
     },
     {
@@ -57,7 +69,10 @@ router.get("/", auth, async (req, res) => {
         $match: {
           user: req.userId,
           type: "expense",
-          date: { $gte: since }
+          $or: [
+            { date: { $gte: since } },
+            { createdAt: { $gte: since } }
+          ]
         }
       },
       { $group: { _id: null, total: { $sum: "$amount" } } }
@@ -137,14 +152,25 @@ router.post("/generate", auth, async (req, res) => {
     };
 
     const catAgg = await Transaction.aggregate([
-      { $match: { user: req.userId, type: "expense" } },
-      { $group: { _id: "$category", total: { $sum: "$amount" } } },
+      {
+        $match: {
+          user: req.userId,
+          type: "expense"
+        }
+      },
+      {
+        $group: {
+          _id: "$category",
+          total: { $sum: "$amount" }
+        }
+      },
       { $sort: { total: -1 } },
       { $limit: 8 }
     ]);
 
     const catTotal = catAgg.reduce((s, c) => s + c.total, 0) || 1;
     const suggestedByCategory = {};
+
     catAgg.forEach((c) => {
       suggestedByCategory[c._id] = Math.round((c.total / catTotal) * available);
     });
