@@ -7,23 +7,23 @@ export default function Budget() {
   const [summary, setSummary] = useState([]);
   const [predict, setPredict] = useState(null);
   const [loading, setLoading] = useState(true);
-
   async function load() {
-    try {
-      const b = await API.get("/budget");
-      setBudget(b.data);
+  try {
+    const b = await API.get("/api/budget");
+    setBudget(b.data);
 
-      const s = await API.get("/transactions/summary");
-      setSummary(s.data || []);
+    const s = await API.get("/api/transactions/summary");
+    setSummary(s.data || []);
 
-      const p = await API.get("/budget/predict");
-      setPredict(p.data);
-    } catch (err) {
-      console.error("Error loading budget data", err);
-    }
+    const p = await API.get("/api/budget/predict");
+    setPredict(p.data);
 
-    setLoading(false);
+  } catch (err) {
+    console.error("Error loading budget data", err);
   }
+
+  setLoading(false);
+}
 
   useEffect(() => {
     load();
