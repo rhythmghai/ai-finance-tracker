@@ -10,7 +10,18 @@ const billRoutes = require('./routes/bills');
 const budgetRoutes = require('./routes/budget');
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: [
+    "http://localhost:5173",
+    "https://ai-finance-tracker-dusky.vercel.app",
+    "https://ai-finance-tracker-git-main-rhythmghais-projects.vercel.app",
+    "https://ai-finance-tracker-fwus07bl5-rhythmghais-projects.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
@@ -20,7 +31,7 @@ app.use('/api/bills', billRoutes);
 app.use('/api/budget', budgetRoutes);
 
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/ai_finance_tracker';
+const MONGO_URI = process.env.MONGO_URI;
 
 mongoose.connect(MONGO_URI)
   .then(() => {
