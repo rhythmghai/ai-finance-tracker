@@ -12,7 +12,7 @@ router.post('/register', async (req, res) => {
     if (existing) return res.status(400).json({ error: 'User exists' });
 
     const user = new User({ name, email, monthlyIncome, savingsGoal });
-    await user.setPassword(password);
+    await user.setPassword(password);    // ← THIS REQUIRES setPassword()
     await user.save();
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET);
