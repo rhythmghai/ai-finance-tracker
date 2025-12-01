@@ -14,7 +14,7 @@ export default function Dashboard() {
 
   async function loadTxs() {
     try {
-      const res = await API.get("/transactions");
+      const res = await API.get("/api/transactions");
       setTxs(res.data || []);
     } catch (e) {
       console.log("Error loading transactions", e);
