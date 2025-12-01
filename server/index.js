@@ -14,8 +14,7 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://ai-finance-tracker-client.vercel.app",
-    "https://ai-finance-tracker.vercel.app"
+    /\.vercel\.app$/
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
