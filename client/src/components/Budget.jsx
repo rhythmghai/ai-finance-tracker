@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import API from "../api";
 import { SpendingPie, ForecastBar } from "./Charts";
-
+console.log("BASE URL:", API.defaults.baseURL);
 export default function Budget() {
   const [budget, setBudget] = useState(null);
   const [summary, setSummary] = useState([]);
