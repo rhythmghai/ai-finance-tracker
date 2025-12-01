@@ -1,13 +1,14 @@
-import axios from 'axios';
+import axios from "axios";
 
 const API = axios.create({
-  baseURL: 'https://ai-finance-tracker-9l91.onrender.com',
+  baseURL: "https://ai-finance-tracker-9l91.onrender.com/api",
 });
 
-API.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
+API.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
 export default API;
+
