@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, 
+  baseURL: 'https://ai-finance-tracker-9l91.onrender.com',
 });
 
 API.interceptors.request.use(config => {
