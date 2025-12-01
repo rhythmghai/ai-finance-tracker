@@ -16,7 +16,7 @@ export default function AddTransaction({ onAdded }) {
     setLoading(true);
 
     try {
-      await API.post('/transactions', {
+      await API.post('/api/transactions', {
         ...form,
         amount: Number(form.amount),
       });
