@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg: #f9fafb;
+  --card: white;
+  --text: #1f2937;
+  --subtext: #6b7280;
+  --gradient-start: #ffe4e6;
+  --gradient-end: #e0f2fe;
+}
+
+/* DARK MODE THEME */
+.dark {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --text: #f1f5f9;
+  --subtext: #94a3b8;
+  --gradient-start: #1e293b;
+  --gradient-end: #0f172a;
+}
+
+/* Apply dynamic variables */
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
 /* small utility to make pastel cards */
 .pastel-card {
   background: rgba(255,255,255,0.9);
