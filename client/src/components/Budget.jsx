@@ -36,18 +36,20 @@ export default function Budget() {
     load();
   }, []);
 
-  // AI Budget Generator
   async function generateAIBudget() {
-    try {
-      const res = await API.post("/api/budget/generate", {
-        targetSavings: Number(targetSavings),
-      });
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
 
-      setAiBudget(res.data);
-    } catch (err) {
-      console.error("AI budget error", err);
-    }
+    const res = await API.post("/api/budget/generate", {
+      userId: user.id,
+      targetSavings: Number(targetSavings),
+    });
+
+    setAiBudget(res.data);
+  } catch (err) {
+    console.error("AI budget error", err);
   }
+}
 
   if (loading)
     return (
