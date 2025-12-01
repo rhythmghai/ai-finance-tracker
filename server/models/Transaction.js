@@ -8,16 +8,8 @@ const TransactionSchema = new mongoose.Schema(
       required: true
     },
 
-    amount: {
-      type: Number,
-      required: true
-    },
-
-    category: {
-      type: String,
-      required: true
-    },
-
+    amount: { type: Number, required: true },
+    category: { type: String, required: true },
     note: String,
 
     type: {
@@ -26,7 +18,6 @@ const TransactionSchema = new mongoose.Schema(
       required: true
     },
 
-    // ⭐ CRITICAL FIELD (FIX FOR YOUR ENTIRE APP) ⭐
     date: {
       type: Date,
       default: Date.now
