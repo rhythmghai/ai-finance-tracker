@@ -38,8 +38,10 @@ router.post("/register", async (req, res) => {
     await user.setPassword(password);
     await user.save();
 
-    // Sign token
-    const token = jwt.sign({ id: user._id }, JWT_SECRET);
+    // Sign token (adds expiry)
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     return res.json({
       token,
@@ -75,7 +77,9 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid credentials" });
 
     // Sign token
-    const token = jwt.sign({ id: user._id }, JWT_SECRET);
+    const token = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     return res.json({
       token,
