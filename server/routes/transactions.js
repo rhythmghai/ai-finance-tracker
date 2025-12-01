@@ -1,27 +1,41 @@
-const express = require('express');
-const Transaction = require('../models/Transaction');
-const auth = require('./_auth');
+const express = require("express");
+const Transaction = require("../models/Transaction");
+const auth = require("./_auth");
 const router = express.Router();
 
-router.post('/', auth, async (req, res) => {
-  const tx = new Transaction({ ...req.body, user: req.userId });
+// CREATE TRANSACTION
+router.post("/", auth, async (req, res) => {
+  const tx = new Transaction({
+    ...req.body,
+    user: req.userId,
+    date: req.body.date || new Date()
+  });
+
   await tx.save();
   res.json(tx);
 });
 
-router.get('/', auth, async (req, res) => {
-  const txs = await Transaction.find({ user: req.userId }).sort({ createdAt: -1 });
+// GET ALL TRANSACTIONS
+router.get("/", auth, async (req, res) => {
+  const txs = await Transaction.find({ user: req.userId })
+    .sort({ date: -1 });
+
   res.json(txs);
 });
 
-// SUMMARY (last 30 days)
-router.get('/summary', auth, async (req, res) => {
-  const { from } = req.query;
-  const since = from ? new Date(from) : new Date(Date.now() - 30*24*60*60*1000);
+// SUMMARY (USE `date`, NOT createdAt)
+router.get("/summary", auth, async (req, res) => {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const agg = await Transaction.aggregate([
-    { $match: { user: req.userId, createdAt: { $gte: since }, type: 'expense' } },
-    { $group: { _id: '$category', total: { $sum: '$amount' } } },
+    {
+      $match: {
+        user: req.userId,
+        type: "expense",
+        date: { $gte: since }
+      }
+    },
+    { $group: { _id: "$category", total: { $sum: "$amount" } } },
     { $sort: { total: -1 } }
   ]);
 
