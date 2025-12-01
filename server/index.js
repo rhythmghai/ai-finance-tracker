@@ -11,6 +11,7 @@ const budgetRoutes = require('./routes/budget');
 
 const app = express();
 
+// CORS
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -22,19 +23,22 @@ app.use(cors({
 
 app.use(express.json());
 
+// ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', txRoutes);
 app.use('/api/subscriptions', subRoutes);
 app.use('/api/bills', billRoutes);
 app.use('/api/budget', budgetRoutes);
 
+// PORT (single definition)
 const PORT = process.env.PORT || 4000;
 const MONGO_URI = process.env.MONGO_URI;
 
+// CONNECT MONGODB + START SERVER
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
-    const PORT = process.env.PORT || 10000;
+
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
