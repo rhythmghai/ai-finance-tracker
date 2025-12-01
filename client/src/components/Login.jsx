@@ -23,7 +23,7 @@ export default function Login() {
       setMsg("Login successful! Redirecting… ✨");
 
       // redirect to dashboard or home page
-      setTimeout(() => navigate("/"), 1000);
+      setTimeout(() => navigate("/dashboard"), 1000);
 
     } catch (e) {
       setMsg("Invalid email or password ❌");
