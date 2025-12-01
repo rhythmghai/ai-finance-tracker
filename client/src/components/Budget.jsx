@@ -13,21 +13,25 @@ export default function Budget() {
   const [aiBudget, setAiBudget] = useState(null);
 
   async function load() {
-    try {
-      const b = await API.get("/api/budget");
-      setBudget(b.data);
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
 
-      const s = await API.get("/api/transactions/summary");
-      setSummary(s.data || []);
+    const b = await API.get(`/api/budget?userId=${user.id}`);
+    setBudget(b.data);
 
-      const p = await API.get("/api/budget/predict");
-      setPredict(p.data);
-    } catch (err) {
-      console.error("Error loading budget data", err);
-    }
-    setLoading(false);
+    const s = await API.get("/api/transactions/summary");
+    setSummary(s.data || []);
+
+    const p = await API.get(`/api/budget/predict?userId=${user.id}`);
+    setPredict(p.data);
+
+  } catch (err) {
+    console.error("Error loading budget data", err);
   }
 
+  setLoading(false);
+}
+  
   useEffect(() => {
     load();
   }, []);
