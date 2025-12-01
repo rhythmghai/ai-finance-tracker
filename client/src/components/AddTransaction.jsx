@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import API from '../api';
+// client/src/components/AddTransaction.jsx
+import React, { useState } from "react";
+import API from "../api";
 
 export default function AddTransaction({ onAdded }) {
   const [form, setForm] = useState({
-    amount: '',
-    category: '',
-    note: '',
-    type: 'expense',
+    amount: "",
+    category: "",
+    note: "",
+    type: "expense",
   });
 
   const [loading, setLoading] = useState(false);
@@ -16,18 +17,20 @@ export default function AddTransaction({ onAdded }) {
     setLoading(true);
 
     try {
-      await API.post('/api/transactions', {
+      await API.post("/api/transactions", {
         ...form,
         amount: Number(form.amount),
+        date: new Date().toISOString(), // ✅ CRITICAL FIX
       });
 
       // Reset form
-      setForm({ amount: '', category: '', note: '', type: 'expense' });
+      setForm({ amount: "", category: "", note: "", type: "expense" });
 
       // Refresh parent list
       onAdded && onAdded();
     } catch (error) {
-      alert('Error adding transaction');
+      console.error(error);
+      alert("Error adding transaction");
     }
 
     setLoading(false);
@@ -74,7 +77,7 @@ export default function AddTransaction({ onAdded }) {
           disabled={loading}
           className="w-full py-2 rounded-full bg-green-200 hover:bg-green-300 disabled:opacity-50"
         >
-          {loading ? 'Adding...' : 'Add'}
+          {loading ? "Adding..." : "Add"}
         </button>
       </form>
     </div>
