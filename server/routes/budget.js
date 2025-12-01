@@ -44,20 +44,45 @@ async function getMonthlyHistory(userId, months = 6) {
 // -----------------------------------------------------
 //  GET /api/budget  (Required by UI Sidebar)
 // -----------------------------------------------------
+
 router.get("/", auth, async (req, res) => {
   try {
     const userId = req.userId;
 
+    // Get user profile
     const user = await User.findById(userId);
-    const history = await getMonthlyHistory(userId, 3);
+    const income = user?.monthlyIncome || 0;
+
+    // Get recent expenses (last 30 days)
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const expenses = await Transaction.aggregate([
+      { $match: { user: userId, type: "expense", date: { $gte: since } } },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    const totalExpense = expenses[0]?.total || 0;
+
+    // Basic smart calculation
+    const remaining = income - totalExpense;
+
+    const suggested = {
+      fixed: Math.round((income * 0.4)),
+      essentials: Math.round((income * 0.3)),
+      discretionary: Math.round((income * 0.3))
+    };
+
+    // small advice
+    let advice = "Looks good!";
+    if (remaining < 0) advice = "You are overspending this month.";
+    else if (remaining < income * 0.1) advice = "Try increasing savings.";
+    else advice = "Healthy spending pattern.";
 
     res.json({
-      income: user?.monthlyIncome || 0,
-      fixed: 0,
-      remaining: 0,
-      suggested: {},
-      advice: "Use the AI generator for full smart planning.",
-      history: history || []
+      income,
+      fixed: totalExpense,
+      remaining,
+      suggested,
+      advice
     });
 
   } catch (err) {
