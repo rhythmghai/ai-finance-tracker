@@ -14,9 +14,8 @@ const app = express();
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://ai-finance-tracker-dusky.vercel.app",
-    "https://ai-finance-tracker-git-main-rhythmghais-projects.vercel.app",
-    "https://ai-finance-tracker-fwus07bl5-rhythmghais-projects.vercel.app"
+    "https://ai-finance-tracker-client.vercel.app",
+    "https://ai-finance-tracker.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
