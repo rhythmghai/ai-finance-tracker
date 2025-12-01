@@ -3,9 +3,10 @@ const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/Transaction");
 const User = require("../models/User");
+const auth = require("./_auth");
 
 // -----------------------------------------------------
-//  Helper: Monthly aggregates (past 6 months)
+//  Helper: Monthly aggregates (past X months)
 // -----------------------------------------------------
 async function getMonthlyHistory(userId, months = 6) {
   const now = new Date();
@@ -41,24 +42,21 @@ async function getMonthlyHistory(userId, months = 6) {
 }
 
 // -----------------------------------------------------
-//  FIX: GET /api/budget  (REQUIRED BY FRONTEND)
+//  GET /api/budget  (Required by UI Sidebar)
 // -----------------------------------------------------
-router.get("/", async (req, res) => {
+router.get("/", auth, async (req, res) => {
   try {
-    const userId = req.user?._id || req.query.userId;
+    const userId = req.userId;
 
-    if (!userId)
-      return res.status(400).json({ error: "User required" });
-
-    // Basic fallback budget so UI does not break
+    const user = await User.findById(userId);
     const history = await getMonthlyHistory(userId, 3);
 
     res.json({
-      income: 0,
+      income: user?.monthlyIncome || 0,
       fixed: 0,
       remaining: 0,
       suggested: {},
-      advice: "Generate an AI budget to get insights!",
+      advice: "Use the AI generator for full smart planning.",
       history: history || []
     });
 
@@ -69,39 +67,60 @@ router.get("/", async (req, res) => {
 });
 
 // -----------------------------------------------------
-//  POST /api/budget/generate (AI MODEL)
+//  GET /api/budget/predict  (UI requires this)
 // -----------------------------------------------------
-router.post("/generate", async (req, res) => {
+router.get("/predict", auth, async (req, res) => {
   try {
-    const userId = req.user?._id || req.body.userId;
+    const userId = req.userId;
+
+    const months = await getMonthlyHistory(userId, 6);
+
+    let values = months.map(m => m.total);
+    let predicted = 0;
+
+    if (values.length >= 2) {
+      const last = values[values.length - 1];
+      const prev = values[values.length - 2];
+      predicted = Math.round(last * 1.05 + (last - prev) * 0.5);
+    }
+
+    res.json({
+      history: months,
+      predicted
+    });
+
+  } catch (err) {
+    console.error("GET /predict error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// -----------------------------------------------------
+//  POST /api/budget/generate  (AI MODEL)
+// -----------------------------------------------------
+router.post("/generate", auth, async (req, res) => {
+  try {
+    const userId = req.userId;
     const { targetSavings = 0 } = req.body;
 
-    if (!userId)
-      return res.status(400).json({ error: "User required" });
-
-    // 1) Monthly history
     const months = await getMonthlyHistory(userId, 6);
     const totals = months.map(m => m.total || 0);
     const avgExpense = totals.length
       ? Math.round(totals.reduce((a, b) => a + b, 0) / totals.length)
       : 0;
 
-    // 2) Income
     const user = await User.findById(userId);
     const income = user?.monthlyIncome || Math.max(avgExpense * 1.2, 0);
 
-    // 3) Savings + Available money
     const suggestedSavings = targetSavings || Math.round(income * 0.2);
     const available = Math.max(income - suggestedSavings, 0);
 
-    // 4) Basic distribution
     const suggested = {
       fixed: Math.round(available * 0.4),
       essentials: Math.round(available * 0.3),
       discretionary: Math.round(available * 0.3),
     };
 
-    // 5) Category suggestions
     const catAgg = await Transaction.aggregate([
       { $match: { user: userId, type: "expense" } },
       { $group: { _id: "$category", total: { $sum: "$amount" } } },
@@ -111,6 +130,7 @@ router.post("/generate", async (req, res) => {
 
     const catTotal = catAgg.reduce((s, c) => s + c.total, 0) || 1;
     const suggestedByCategory = {};
+
     catAgg.forEach(c => {
       suggestedByCategory[c._id] =
         Math.round((c.total / catTotal) * available);
@@ -127,7 +147,7 @@ router.post("/generate", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("POST /api/budget/generate error:", err);
+    console.error("POST /generate error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
