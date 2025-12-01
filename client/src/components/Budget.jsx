@@ -40,9 +40,10 @@ export default function Budget() {
 
     try {
       const user = JSON.parse(localStorage.getItem("user"));
+
       const res = await API.post("/api/budget/generate", {
-        targetSavings: Number(savingGoal),
         userId: user.id,
+        targetSavings: Number(savingGoal),
       });
 
       setBudget(res.data);
@@ -99,7 +100,7 @@ export default function Budget() {
         <div>
           <h3 className="font-bold text-lg text-gray-700">AI Smart Budget</h3>
           <p className="text-sm text-gray-600">
-            Income: ₹{budget.income} • Savings: ₹{budget.suggestedSavings} • Remaining: ₹{budget.remaining}
+            Income: ₹{budget.income} • Avg Expense: ₹{budget.avgExpense} • Savings: ₹{budget.suggestedSavings}
           </p>
         </div>
       </div>
@@ -107,14 +108,60 @@ export default function Budget() {
       {/* Distribution + Pie */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         
-        {/* Distribution */}
+        {/* Suggested Allocation */}
         <div>
-          <h4 className="font-semibold text-sm mb-2 text-gray-700">Recommended Allocation</h4>
+          <h4 className="font-semibold text-sm mb-2 text-gray-700">
+            Recommended Allocation
+          </h4>
           <ul className="text-sm text-gray-700">
             {Object.entries(budget.suggested || {}).map(([k, v]) => (
               <li key={k} className="mb-1 capitalize">{k}: ₹{v}</li>
             ))}
           </ul>
+
+          {/* Category Level Distribution */}
+          <h4 className="font-semibold text-sm mt-4 mb-2 text-gray-700">
+            Category-wise Smart Allocation
+          </h4>
+          <ul className="text-sm text-gray-700">
+            {Object.entries(budget.suggestedByCategory || {}).map(([k, v]) => (
+              <li key={k} className="capitalize">{k}: ₹{v}</li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Spending Pie */}
+        <div>
+          <h4 className="font-semibold text-sm mb-2 text-gray-700">
+            Spending Breakdown (30 days)
+          </h4>
+          {summary.length > 0 ? (
+            <SpendingPie data={summary} />
+          ) : (
+            <p className="text-sm text-gray-500">No recent spending data.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Prediction */}
+      <div className="mt-6">
+        <h4 className="font-semibold text-sm mb-2 text-gray-700">Monthly Forecast</h4>
+
+        {predict?.history ? (
+          <ForecastBar history={predict.history} />
+        ) : (
+          <p className="text-sm text-gray-500">No history available.</p>
+        )}
+
+        <p className="mt-2 text-sm text-gray-700">
+          Predicted next month:{" "}
+          <span className="font-semibold">₹{predict?.predicted ?? "—"}</span>
+        </p>
+      </div>
+
+    </div>
+  );
+}
         </div>
 
         {/* Spending Pie */}
