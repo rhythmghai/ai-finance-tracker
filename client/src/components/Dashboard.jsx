@@ -39,6 +39,108 @@ export default function Dashboard() {
   }
 
   return (
+    <div className="p-6 min-h-screen bg-gradient-to-b from-blue-50 via-pink-50 to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+
+      {/* HEADER */}
+      <header className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-700 dark:text-gray-100 drop-shadow-sm">
+          Finance Tracker 💰
+        </h1>
+
+        <div className="flex items-center gap-3">
+          {/* DARK MODE TOGGLE */}
+          <button
+            onClick={() => {
+              document.documentElement.classList.toggle("dark");
+              localStorage.setItem(
+                "theme",
+                document.documentElement.classList.contains("dark")
+                  ? "dark"
+                  : "light"
+              );
+            }}
+            className="py-2 px-4 rounded-full bg-gray-200 hover:bg-gray-300 
+                       dark:bg-gray-700 dark:hover:bg-gray-600 
+                       text-gray-700 dark:text-gray-200 shadow-md transition"
+          >
+            Toggle Theme
+          </button>
+
+          {/* LOGOUT BUTTON */}
+          <button
+            onClick={logout}
+            className="py-2 px-4 rounded-full bg-pink-200 hover:bg-pink-300 
+                       dark:bg-pink-600 dark:hover:bg-pink-500 
+                       shadow-md transition"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* MAIN GRID */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* LEFT COLUMN */}
+        <div className="space-y-4 md:col-span-1">
+          <AddTransaction onAdded={loadTxs} />
+          <Subscriptions />
+          <Bills />
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div className="md:col-span-2 space-y-4">
+          <Budget />
+
+          {/* TRANSACTIONS CARD */}
+          <div className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md p-4 rounded-2xl shadow pastel-card border dark:border-gray-700">
+            <h3 className="font-semibold mb-3 text-gray-700 dark:text-gray-100">
+              Recent Transactions
+            </h3>
+
+            {loading ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+            ) : txs.length ? (
+              txs.map((tx) => (
+                <div
+                  key={tx._id}
+                  className="flex justify-between items-center border-b dark:border-gray-700 py-2 last:border-b-0"
+                >
+                  <div>
+                    <div className="font-medium capitalize text-gray-800 dark:text-gray-100">
+                      {tx.category} • {tx.type}
+                    </div>
+                    {tx.note && (
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        {tx.note}
+                      </div>
+                    )}
+                  </div>
+
+                  <div
+                    className={`font-semibold ${
+                      tx.type === "expense"
+                        ? "text-red-500"
+                        : "text-green-600"
+                    }`}
+                  >
+                    ₹{tx.amount}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400">No transactions yet</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+    localStorage.removeItem("user");
+    navigate("/");
+  }
+
+  return (
     <div className="p-6 min-h-screen bg-gradient-to-b from-blue-50 via-pink-50 to-green-50">
       {/* HEADER */}
       <header className="flex items-center justify-between mb-6">
