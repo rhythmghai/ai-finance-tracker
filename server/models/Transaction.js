@@ -7,10 +7,30 @@ const TransactionSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
-    amount: Number,
-    category: String,
+
+    amount: {
+      type: Number,
+      required: true
+    },
+
+    category: {
+      type: String,
+      required: true
+    },
+
     note: String,
-    type: { type: String } // "expense" or "income"
+
+    type: {
+      type: String,
+      enum: ["income", "expense"],
+      required: true
+    },
+
+    // ⭐ CRITICAL FIELD (FIX FOR YOUR ENTIRE APP) ⭐
+    date: {
+      type: Date,
+      default: Date.now
+    }
   },
   { timestamps: true }
 );
