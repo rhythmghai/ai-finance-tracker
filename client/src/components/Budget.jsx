@@ -127,14 +127,23 @@ async function generateAIBudget() {
     advice = "Your income is mostly consumed by fixed expenses. Try lowering discretionary spending.";
 
   const result = {
-    income,
-    avgExpense,
-    bills,
-    subscriptions,
-    fixedCosts,
-    suggested,
-    advice,
-  };
+  income,
+  avgExpense,
+  bills,
+  subscriptions,
+  fixedCosts,
+  suggested,
+  advice,
+
+  // 🔥 AI PIE chart data
+  aiPie: [
+    { category: "Bills", amount: bills },
+    { category: "Subscriptions", amount: subscriptions },
+    { category: "Essentials", amount: suggested.essentials },
+    { category: "Discretionary", amount: suggested.discretionary },
+    { category: "Savings", amount: savings }
+  ]
+};
 
   setAiBudget(result);
   setBudget((prev) => ({ ...(prev || {}), ...result }));
