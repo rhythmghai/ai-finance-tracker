@@ -51,7 +51,79 @@ export default function Budget() {
   // ---------------------------------------------------------
   // 🔥 FRONTEND-ONLY AI ENGINE — Looks like ML model
   // ---------------------------------------------------------
+
   async function generateAIBudget() {
+  setStatusMsg("Analyzing your expenses with AI… 🤖");
+
+  await new Promise((r) => setTimeout(r, 1200)); // AI delay
+
+  // Fetch bills and subscriptions directly
+  const billRes = await API.get("/api/bills");
+  const subRes = await API.get("/api/subscriptions");
+
+  const bills = billRes.data.reduce((sum, b) => sum + b.amount, 0);
+  const subscriptions = subRes.data.reduce(
+    (sum, s) => sum + s.monthlyCost,
+    0
+  );
+
+  const income = budget?.income || 50000;
+  const fixedCosts = bills + subscriptions;
+
+  const avgExpense =
+    predict?.history?.length
+      ? Math.round(
+          predict.history.reduce((a, b) => a + b.total, 0) /
+            predict.history.length
+        )
+      : fixedCosts + 5000;
+
+  const savings = Number(targetSavings) || 0;
+  const available = Math.max(income - fixedCosts - savings, 0);
+
+  const aiFactor = 0.9 + Math.random() * 0.25;
+
+  const suggested = {
+    fixed: fixedCosts,
+    essentials: Math.round(available * 0.5 * aiFactor),
+    discretionary: Math.round(available * 0.5 * aiFactor),
+  };
+
+  let advice = "Your spending appears balanced.";
+
+  if (subscriptions > income * 0.15)
+    advice = "Your subscription spending is high.";
+  if (bills > income * 0.3)
+    advice = "Bills consume a large portion of your income.";
+  if (available < income * 0.2)
+    advice = "Your fixed costs limit flexible spending.";
+
+  const result = {
+    income,
+    avgExpense,
+    bills,
+    subscriptions,
+    fixedCosts,
+    suggested,
+    advice,
+    aiPie: [
+      { category: "Bills", amount: bills },
+      { category: "Subscriptions", amount: subscriptions },
+      { category: "Essentials", amount: suggested.essentials },
+      { category: "Discretionary", amount: suggested.discretionary },
+      { category: "Savings", amount: savings },
+    ],
+  };
+
+  setAiBudget(result);
+  setBudget((prev) => ({ ...(prev || {}), ...result }));
+  setStatusMsg("AI budget generated.");
+}
+
+
+
+  
+  /*async function generateAIBudget() {
     setStatusMsg("Analyzing your expenses with AI… 🤖");
 
     await new Promise((r) => setTimeout(r, 1200)); // AI delay
@@ -119,7 +191,7 @@ export default function Budget() {
     setAiBudget(result);
     setBudget((prev) => ({ ...(prev || {}), ...result }));
     setStatusMsg("AI budget generated successfully.");
-  }
+  }*/
 
   // API TEST
   async function checkApi() {
