@@ -218,25 +218,26 @@ export default function Budget() {
         {/* ------------------------------ */}
         {aiBudget && (
           <div>
+            
 
             {/* Numbers Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-white/70 dark:bg-gray-800/70 shadow-md text-center">
+              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
                 <p className="text-xs text-gray-500">Income</p>
                 <p className="text-lg font-semibold">₹{aiBudget.income}</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white/70 dark:bg-gray-800/70 shadow-md text-center">
+              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
                 <p className="text-xs text-gray-500">Avg Expense</p>
                 <p className="text-lg font-semibold">₹{aiBudget.avgExpense}</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white/70 dark:bg-gray-800/70 shadow-md text-center">
+              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
                 <p className="text-xs text-gray-500">Bills</p>
                 <p className="text-lg font-semibold">₹{aiBudget.bills}</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white/70 dark:bg-gray-800/70 shadow-md text-center">
+              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
                 <p className="text-xs text-gray-500">Subscriptions</p>
                 <p className="text-lg font-semibold">₹{aiBudget.subscriptions}</p>
               </div>
