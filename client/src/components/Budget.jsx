@@ -48,7 +48,7 @@ export default function Budget() {
   }, []);
 
   // AI Budget Generator (OFFLINE SMART BUDGET)
-  async function generateAIBudget() {
+  /*async function generateAIBudget() {
     setStatusMsg("");
     try {
       const res = await API.post("/api/budget/generate", {
@@ -70,6 +70,76 @@ export default function Budget() {
       );
     }
   }
+*/
+
+  // 💡 FRONTEND-ONLY FAKE AI THAT USES INCOME + BILLS + SUBSCRIPTIONS
+async function generateAIBudget() {
+  setStatusMsg("Analyzing your expenses with AI…");
+
+  // simulate AI thinking
+  await new Promise(r => setTimeout(r, 1200));
+
+  // income fallback if missing
+  const income = budget?.income || 50000;
+
+  // Get total bills & subscriptions (from summary if available)
+  const bills = summary
+    .filter(s => s._id?.toLowerCase().includes("bill"))
+    .reduce((sum, s) => sum + s.total, 0);
+
+  const subscriptions = summary
+    .filter(s => s._id?.toLowerCase().includes("subscription"))
+    .reduce((sum, s) => sum + s.total, 0);
+
+  const fixedCosts = bills + subscriptions;
+
+  const avgExpense =
+    predict?.history?.length
+      ? Math.round(
+          predict.history.reduce((a, b) => a + b.total, 0) /
+            predict.history.length
+        )
+      : fixedCosts + 5000;
+
+  const savings = Number(targetSavings) || 0;
+
+  const available = Math.max(income - savings - fixedCosts, 0);
+
+  // Random AI multiplier to look like real ML variation
+  const aiFactor = 0.9 + Math.random() * 0.25;
+
+  const suggested = {
+    fixed: Math.round(fixedCosts), // actual bills + subscriptions
+    essentials: Math.round(available * 0.50 * aiFactor),
+    discretionary: Math.round(available * 0.50 * aiFactor),
+  };
+
+  // AI ADVICE
+  let advice = "Your spending pattern appears normal.";
+
+  if (subscriptions > income * 0.15)
+    advice = "You are spending too much on subscriptions. Try cutting unused ones.";
+
+  if (bills > income * 0.3)
+    advice = "Bills are covering a large part of your income. Consider reducing utilities.";
+
+  if (available < income * 0.2)
+    advice = "Your income is mostly consumed by fixed expenses. Try lowering discretionary spending.";
+
+  const result = {
+    income,
+    avgExpense,
+    bills,
+    subscriptions,
+    fixedCosts,
+    suggested,
+    advice,
+  };
+
+  setAiBudget(result);
+  setBudget((prev) => ({ ...(prev || {}), ...result }));
+  setStatusMsg("AI budget generated.");
+}
 
   // Manual API test helper
   async function checkApi() {
