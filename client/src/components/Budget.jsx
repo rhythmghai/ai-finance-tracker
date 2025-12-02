@@ -3,27 +3,20 @@ import React, { useEffect, useState } from "react";
 import API from "../api";
 import { SpendingPie, ForecastBar } from "./Charts";
 
-console.log("BASE URL:", API.defaults.baseURL);
-
 export default function Budget() {
   const [budget, setBudget] = useState(null);
   const [summary, setSummary] = useState([]);
   const [predict, setPredict] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // AI Budget States
   const [targetSavings, setTargetSavings] = useState("");
   const [aiBudget, setAiBudget] = useState(null);
-
-  // Debug / status
   const [statusMsg, setStatusMsg] = useState("");
 
-  // ---------------------------------------------------------
-  // LOAD DATA
-  // ---------------------------------------------------------
+  // ----------------------------
+  // LOAD INITIAL DATA
+  // ----------------------------
   async function load() {
-    setLoading(true);
-    setStatusMsg("");
     try {
       const b = await API.get("/api/budget");
       setBudget(b.data || null);
@@ -34,14 +27,10 @@ export default function Budget() {
       const p = await API.get("/api/budget/predict");
       setPredict(p.data || null);
     } catch (err) {
-      console.error("Error loading budget data", err);
-      setStatusMsg(
-        (err?.response && `${err.response.status} ${err.response.statusText}`) ||
-          "Network error"
-      );
-    } finally {
-      setLoading(false);
+      console.error("Error loading budget data:", err);
+      setStatusMsg("Failed to load budget data.");
     }
+    setLoading(false);
   }
 
   useEffect(() => {
@@ -49,126 +38,54 @@ export default function Budget() {
   }, []);
 
   // ---------------------------------------------------------
-  // 🔥 FRONTEND-ONLY AI ENGINE — Looks like ML model
+  // 🔥 FRONTEND HEURISTIC AI BUDGET GENERATOR
   // ---------------------------------------------------------
-
   async function generateAIBudget() {
-  setStatusMsg("Analyzing your expenses with AI… 🤖");
-
-  await new Promise((r) => setTimeout(r, 1200)); // AI delay
-
-  // Fetch bills and subscriptions directly
-  const billRes = await API.get("/api/bills");
-  const subRes = await API.get("/api/subscriptions");
-
-  const bills = billRes.data.reduce((sum, b) => sum + b.amount, 0);
-  const subscriptions = subRes.data.reduce(
-    (sum, s) => sum + s.monthlyCost,
-    0
-  );
-
-  const income = budget?.income || 50000;
-  const fixedCosts = bills + subscriptions;
-
-  const avgExpense =
-    predict?.history?.length
-      ? Math.round(
-          predict.history.reduce((a, b) => a + b.total, 0) /
-            predict.history.length
-        )
-      : fixedCosts + 5000;
-
-  const savings = Number(targetSavings) || 0;
-  const available = Math.max(income - fixedCosts - savings, 0);
-
-  const aiFactor = 0.9 + Math.random() * 0.25;
-
-  const suggested = {
-    fixed: fixedCosts,
-    essentials: Math.round(available * 0.5 * aiFactor),
-    discretionary: Math.round(available * 0.5 * aiFactor),
-  };
-
-  let advice = "Your spending appears balanced.";
-
-  if (subscriptions > income * 0.15)
-    advice = "Your subscription spending is high.";
-  if (bills > income * 0.3)
-    advice = "Bills consume a large portion of your income.";
-  if (available < income * 0.2)
-    advice = "Your fixed costs limit flexible spending.";
-
-  const result = {
-    income,
-    avgExpense,
-    bills,
-    subscriptions,
-    fixedCosts,
-    suggested,
-    advice,
-    aiPie: [
-      { category: "Bills", amount: bills },
-      { category: "Subscriptions", amount: subscriptions },
-      { category: "Essentials", amount: suggested.essentials },
-      { category: "Discretionary", amount: suggested.discretionary },
-      { category: "Savings", amount: savings },
-    ],
-  };
-
-  setAiBudget(result);
-  setBudget((prev) => ({ ...(prev || {}), ...result }));
-  setStatusMsg("AI budget generated.");
-}
-
-
-
-  
-  /*async function generateAIBudget() {
     setStatusMsg("Analyzing your expenses with AI… 🤖");
 
-    await new Promise((r) => setTimeout(r, 1200)); // AI delay
+    await new Promise((r) => setTimeout(r, 1200));
+
+    // ✔ Fetch bills directly
+    const billRes = await API.get("/api/bills");
+    const subRes = await API.get("/api/subscriptions");
+
+    const bills = billRes.data.reduce((sum, b) => sum + b.amount, 0);
+    const subscriptions = subRes.data.reduce(
+      (sum, s) => sum + s.monthlyCost,
+      0
+    );
 
     const income = budget?.income || 50000;
-
-    const bills = summary
-      .filter((s) => s._id?.toLowerCase().includes("bill"))
-      .reduce((sum, s) => sum + s.total, 0);
-
-    const subscriptions = summary
-      .filter((s) => s._id?.toLowerCase().includes("subscription"))
-      .reduce((sum, s) => sum + s.total, 0);
-
     const fixedCosts = bills + subscriptions;
 
-    const avgExpense = predict?.history?.length
-      ? Math.round(
-          predict.history.reduce((a, b) => a + b.total, 0) /
-            predict.history.length
-        )
-      : fixedCosts + 5000;
+    const avgExpense =
+      predict?.history?.length
+        ? Math.round(
+            predict.history.reduce((a, b) => a + b.total, 0) /
+              predict.history.length
+          )
+        : fixedCosts + 5000;
 
     const savings = Number(targetSavings) || 0;
-    const available = Math.max(income - savings - fixedCosts, 0);
+    const available = Math.max(income - fixedCosts - savings, 0);
 
     const aiFactor = 0.9 + Math.random() * 0.25;
 
     const suggested = {
-      fixed: Math.round(fixedCosts),
+      fixed: fixedCosts,
       essentials: Math.round(available * 0.5 * aiFactor),
       discretionary: Math.round(available * 0.5 * aiFactor),
     };
 
-    // AI wording
+    // AI financial heuristics (insight logic)
     let advice = "Your spending appears balanced.";
+
     if (subscriptions > income * 0.15)
-      advice =
-        "Your subscription spending is quite high. Consider removing unused services.";
+      advice = "Your subscription spending is relatively high.";
     if (bills > income * 0.3)
-      advice =
-        "Bills consume a large part of your income. Try reducing electricity or wifi costs.";
+      advice = "Bills consume a large portion of your income.";
     if (available < income * 0.2)
-      advice =
-        "Your fixed expenses limit flexible spending. Adjust luxury purchases.";
+      advice = "Your fixed costs limit flexible spending.";
 
     const result = {
       income,
@@ -178,7 +95,6 @@ export default function Budget() {
       fixedCosts,
       suggested,
       advice,
-
       aiPie: [
         { category: "Bills", amount: bills },
         { category: "Subscriptions", amount: subscriptions },
@@ -190,250 +106,217 @@ export default function Budget() {
 
     setAiBudget(result);
     setBudget((prev) => ({ ...(prev || {}), ...result }));
-    setStatusMsg("AI budget generated successfully.");
-  }*/
-
-  // API TEST
-  async function checkApi() {
-    try {
-      const r = await API.get("/api/budget");
-      setStatusMsg("API OK: /api/budget responded");
-      console.log("/api/budget", r.data);
-    } catch (e) {
-      console.error("API check failed", e);
-      setStatusMsg("API error");
-    }
+    setStatusMsg("AI budget generated.");
   }
 
-  // ---------------------------------------------------------
-  // LOADING + NULL UI
-  // ---------------------------------------------------------
+  // ----------------------------
+  // UI RENDER
+  // ----------------------------
   if (loading)
     return (
-      <div className="bg-white/80 p-4 rounded-2xl shadow pastel-card border">
+      <div className="bg-white/80 p-4 rounded-2xl shadow border">
         Loading budget…
       </div>
     );
 
   if (!budget)
     return (
-      <div className="bg-white/80 p-4 rounded-2xl shadow pastel-card border">
-        Could not load budget.
-        <button
-          onClick={checkApi}
-          className="mt-2 px-3 py-1 rounded bg-pink-200 hover:bg-pink-300"
-        >
-          Check API
-        </button>
-        <div className="text-red-500 text-sm mt-1">{statusMsg}</div>
+      <div className="bg-white/80 p-4 rounded-2xl shadow border">
+        Unable to load budget data.
       </div>
     );
 
-  // ---------------------------------------------------------
-  // MAIN UI START
-  // ---------------------------------------------------------
   return (
-    <div className="bg-white/80 p-4 rounded-2xl shadow pastel-card border dark:bg-gray-800/60 dark:border-gray-700">
+    <div className="bg-white/80 p-4 rounded-2xl shadow border dark:bg-gray-800/60 dark:border-gray-700">
 
-      {/* ---------------------------------------------------------------- */}
-      {/* 🌟 PREMIUM AI MONTHLY BUDGET PLANNER UI */}
-      {/* ---------------------------------------------------------------- */}
-      <div className="relative p-6 mb-6 rounded-3xl shadow-xl backdrop-blur-xl 
+      {/* ------------------------------------------------ */}
+      {/* 🌟 AI MONTHLY BUDGET PLANNER */}
+      {/* ------------------------------------------------ */}
+      <div className="relative p-6 mb-6 rounded-3xl shadow-xl 
         bg-gradient-to-br from-purple-100/70 via-pink-100/70 to-blue-100/70 
         dark:from-gray-700/60 dark:via-gray-800/60 dark:to-gray-900/60 
         border border-purple-300/40 dark:border-gray-600/40">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
             🤖 AI Monthly Budget Planner
           </h3>
-          <div className="text-xs px-3 py-1 rounded-full bg-purple-600 text-white animate-pulse">
+          <span className="text-xs px-3 py-1 rounded-full bg-purple-600 text-white">
             AI Active
-          </div>
+          </span>
         </div>
 
-        <p className="text-sm text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
-          Let AI analyze your income, expenses, bills, and subscriptions to
-          generate a personalized monthly budget.
+        <p className="text-gray-700 dark:text-gray-300 mb-4">
+          Let AI analyze your income, bills, and subscriptions to generate a personalized budget.
         </p>
 
-        {/* Input */}
-        <div className="flex gap-3 items-center mb-5">
-          <div className="flex items-center flex-1 bg-white/80 dark:bg-gray-700/60 border rounded-xl px-3 py-2 shadow-inner">
-            <span className="text-gray-500 dark:text-gray-300 mr-2">₹</span>
+        {/* Savings input */}
+        <div className="flex gap-3 mb-4">
+          <div className="flex items-center flex-1 bg-white/50 dark:bg-gray-700/60 border rounded-xl px-3 py-2">
+            <span className="text-gray-600 dark:text-gray-300 mr-2">₹</span>
             <input
               type="number"
               value={targetSavings}
               onChange={(e) => setTargetSavings(e.target.value)}
-              className="w-full bg-transparent focus:outline-none text-gray-700 dark:text-gray-200"
+              className="w-full bg-transparent text-gray-800 dark:text-gray-200 focus:outline-none"
               placeholder="Enter monthly savings goal"
             />
           </div>
-
           <button
             onClick={generateAIBudget}
-            className="px-5 py-2 rounded-xl bg-purple-600 text-white font-semibold 
-            hover:bg-purple-700 active:scale-95 transition-all shadow-md">
+            className="px-5 py-2 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700"
+          >
             Generate
           </button>
         </div>
 
         {statusMsg && (
-          <div className="text-sm text-purple-700 dark:text-purple-300 mb-3 font-medium">
+          <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
             {statusMsg}
-          </div>
+          </p>
         )}
 
-        {/* ------------------------------ */}
         {/* AI OUTPUT */}
-        {/* ------------------------------ */}
         {aiBudget && (
-          <div>
-            
-
-            {/* Numbers Grid */}
+          <>
+            {/* METRICS */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
-                <p className="text-xs text-gray-500">Income</p>
-                <p className="text-lg font-semibold">₹{aiBudget.income}</p>
+
+              <div className="p-4 rounded-2xl bg-black/30 shadow text-center">
+                <p className="text-xs text-gray-300">Income</p>
+                <p className="text-xl font-bold text-white">₹{aiBudget.income}</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
-                <p className="text-xs text-gray-500">Avg Expense</p>
-                <p className="text-lg font-semibold">₹{aiBudget.avgExpense}</p>
+              <div className="p-4 rounded-2xl bg-black/30 shadow text-center">
+                <p className="text-xs text-gray-300">Avg Expense</p>
+                <p className="text-xl font-bold text-white">₹{aiBudget.avgExpense}</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
-                <p className="text-xs text-gray-500">Bills</p>
-                <p className="text-lg font-semibold">₹{aiBudget.bills}</p>
+              <div className="p-4 rounded-2xl bg-black/30 shadow text-center">
+                <p className="text-xs text-gray-300">Bills</p>
+                <p className="text-xl font-bold text-white">₹{aiBudget.bills}</p>
               </div>
 
-              <div className="p-3 rounded-2xl bg-white/10 dark:bg-gray-800/70 shadow-md text-center">
-                <p className="text-xs text-gray-500">Subscriptions</p>
-                <p className="text-lg font-semibold">₹{aiBudget.subscriptions}</p>
+              <div className="p-4 rounded-2xl bg-black/30 shadow text-center">
+                <p className="text-xs text-gray-300">Subscriptions</p>
+                <p className="text-xl font-bold text-white">₹{aiBudget.subscriptions}</p>
               </div>
+
             </div>
 
-            {/* Allocation */}
+            {/* Suggested Allocation */}
             <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-2">
               Suggested Allocation
             </h4>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
               {Object.entries(aiBudget.suggested).map(([k, v]) => (
-                <div
-                  key={k}
-                  className="p-3 rounded-xl bg-purple-50 dark:bg-gray-800 shadow"
-                >
-                  <p className="text-xs uppercase text-gray-500">{k}</p>
-                  <p className="text-lg font-bold text-gray-800 dark:text-gray-100">
-                    ₹{v}
-                  </p>
+                <div key={k} className="p-4 bg-gray-900/40 text-white rounded-xl shadow">
+                  <p className="text-xs text-gray-400 uppercase">{k}</p>
+                  <p className="text-xl font-bold">₹{v}</p>
                 </div>
               ))}
             </div>
 
-            {/* AI PIE CHART */}
-            {aiBudget.aiPie && (
-              <div className="mt-6">
-                <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">
-                  AI Spending Distribution
-                </h4>
-                <SpendingPie
-                  data={aiBudget.aiPie.map((i) => ({
-                    _id: i.category,
-                    total: i.amount,
-                  }))}
-                />
+            {/* Fixed expenses */}
+            <div className="mt-4 bg-gray-200/50 dark:bg-gray-900/60 p-4 rounded-2xl shadow">
+              <h4 className="font-semibold text-gray-800 dark:text-gray-100 mb-3">
+                Fixed Expenses
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl shadow">
+                  <p className="text-xs text-gray-500">Bills</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    ₹{aiBudget.bills}
+                  </p>
+                </div>
+                <div className="p-3 bg-white/80 dark:bg-gray-900/40 rounded-xl shadow">
+                  <p className="text-xs text-gray-500">Subscriptions</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                    ₹{aiBudget.subscriptions}
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
 
-            {/* Insight Card */}
-            <div className="mt-6 p-4 rounded-2xl shadow-inner bg-white/80 dark:bg-gray-900/60 border-l-4 border-purple-500">
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                <span className="font-semibold text-purple-700 dark:text-purple-300">
-                  AI Insight:
-                </span>{" "}
+            {/* AI PIE */}
+            <h4 className="mt-6 font-semibold text-gray-800 dark:text-gray-100">
+              AI Spending Distribution
+            </h4>
+            <SpendingPie
+              data={aiBudget.aiPie.map((i) => ({ _id: i.category, total: i.amount }))}
+            />
+
+            {/* Insights */}
+            <div className="mt-6 p-4 rounded-xl bg-white/80 dark:bg-gray-900/50 border-l-4 border-purple-500 shadow">
+              <p className="text-gray-700 dark:text-gray-300">
+                <span className="font-semibold text-purple-700 dark:text-purple-300">AI Insight:</span>{" "}
                 {aiBudget.advice}
               </p>
             </div>
-          </div>
-        )}
 
-        {!aiBudget && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 italic">
-            Enter a savings goal and click Generate to begin.
-          </p>
+          </>
         )}
       </div>
 
-      {/* --------------------------------------------------------- */}
-      {/* STANDARD SUMMARY */}
-      {/* --------------------------------------------------------- */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="font-bold text-lg text-gray-700 dark:text-gray-100">Smart Budget</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Income: ₹{budget.income} • Fixed: ₹{budget.fixed} • Remaining: ₹{budget.remaining}
-          </p>
-        </div>
-
-        <div className="text-right max-w-xs">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Savings advice</p>
-          <p className="text-xs text-gray-600 dark:text-gray-300 break-words">{budget.advice}</p>
-        </div>
+      {/* ------------------------------------------------ */}
+      {/* SMART BUDGET SUMMARY (Non-AI) */}
+      {/* ------------------------------------------------ */}
+      <div>
+        <h3 className="font-bold text-lg text-gray-700 dark:text-gray-100">
+          Smart Budget
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Income: ₹{budget.income} • Fixed: ₹{budget.fixed} • Remaining: ₹{budget.remaining}
+        </p>
       </div>
 
-      {/* --------------------------------------------------------- */}
-      {/* SPENDING BREAKDOWN */}
-      {/* --------------------------------------------------------- */}
+      {/* EXPENSE BREAKDOWN */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <h4 className="font-semibold text-sm mb-2 text-gray-700 dark:text-gray-100">
+          <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-100">
             Recommended Allocation
           </h4>
-
           <ul className="text-sm text-gray-700 dark:text-gray-300">
-            {Object.entries(budget.suggested || {}).map(([k, v]) => (
-              <li key={k} className="mb-1 capitalize">
-                {k}: ₹{v}
-              </li>
-            ))}
+            {budget.suggested &&
+              Object.entries(budget.suggested).map(([k, v]) => (
+                <li key={k} className="capitalize">
+                  {k}: ₹{v}
+                </li>
+              ))}
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm mb-2 text-gray-700 dark:text-gray-100">
+          <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-100">
             Spending Breakdown (30d)
           </h4>
-
           {summary.length > 0 ? (
             <SpendingPie data={summary} />
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No recent spending data.</p>
+            <p className="text-sm text-gray-500">No recent spending data.</p>
           )}
         </div>
       </div>
 
-      {/* --------------------------------------------------------- */}
       {/* FORECAST */}
-      {/* --------------------------------------------------------- */}
       <div className="mt-6">
-        <h4 className="font-semibold text-sm mb-2 text-gray-700 dark:text-gray-100">
+        <h4 className="font-semibold text-sm text-gray-700 dark:text-gray-100">
           Monthly History
         </h4>
 
         {predict?.history?.length > 0 ? (
           <ForecastBar history={predict.history} />
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">No history available.</p>
+          <p className="text-sm text-gray-500">No history available.</p>
         )}
 
         <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-          Predicted next month: <span className="font-semibold">₹{predict?.predicted ?? "—"}</span>
+          Predicted next month:{" "}
+          <span className="font-semibold">₹{predict?.predicted ?? "—"}</span>
         </p>
       </div>
+
     </div>
   );
 }
