@@ -2,7 +2,9 @@
 import React, { useEffect, useState } from "react";
 import API from "../api";
 import { SpendingPie, ForecastBar } from "./Charts";
+
 console.log("BASE URL:", API.defaults.baseURL);
+
 export default function Budget() {
   const [budget, setBudget] = useState(null);
   const [summary, setSummary] = useState([]);
@@ -16,26 +18,25 @@ export default function Budget() {
   // Debug / status
   const [statusMsg, setStatusMsg] = useState("");
 
+  // Load initial budget + charts + prediction
   async function load() {
     setLoading(true);
     setStatusMsg("");
     try {
-      // GET /api/budget (protected) -> should return fallback if no real budget
       const b = await API.get("/api/budget");
       setBudget(b.data || null);
 
-      // transactions summary for pie chart
       const s = await API.get("/api/transactions/summary");
       setSummary(s.data || []);
 
-      // predict endpoint
       const p = await API.get("/api/budget/predict");
       setPredict(p.data || null);
+
     } catch (err) {
       console.error("Error loading budget data", err);
       setStatusMsg(
         (err?.response && `${err.response.status} ${err.response.statusText}`) ||
-          "Network error"
+        "Network error"
       );
     } finally {
       setLoading(false);
@@ -44,31 +45,33 @@ export default function Budget() {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // AI Budget Generator
+  // AI Budget Generator (OFFLINE SMART BUDGET)
   async function generateAIBudget() {
     setStatusMsg("");
     try {
       const res = await API.post("/api/budget/generate", {
         targetSavings: Number(targetSavings) || 0,
       });
+
       setAiBudget(res.data);
-      // also update the main budget view optionally
+
+      // Optionally sync the main budget section
       setBudget((prev) => ({ ...(prev || {}), ...res.data }));
+
       setStatusMsg("AI budget generated.");
     } catch (err) {
       console.error("AI budget error", err);
       setStatusMsg(
         err?.response?.data?.error ||
-          (err?.response && `${err.response.status} ${err.response.statusText}`) ||
-          "Error generating AI budget"
+        (err?.response && `${err.response.status} ${err.response.statusText}`) ||
+        "Error generating AI budget"
       );
     }
   }
 
-  // small debug helper: ping budget endpoint and show result
+  // Manual API test helper
   async function checkApi() {
     try {
       const r = await API.get("/api/budget");
@@ -77,12 +80,14 @@ export default function Budget() {
     } catch (e) {
       console.error("API check failed", e);
       setStatusMsg(
-        (e?.response && `${e.response.status} ${e.response.data?.error || e.response.statusText}`) ||
-          "Network error"
+        (e?.response &&
+          `${e.response.status} ${e.response.data?.error || e.response.statusText}`) ||
+        "Network error"
       );
     }
   }
 
+  // Loading Screen
   if (loading)
     return (
       <div className="bg-white/80 p-4 rounded-2xl shadow pastel-card border">
@@ -90,6 +95,7 @@ export default function Budget() {
       </div>
     );
 
+  // No budget fallback
   if (!budget)
     return (
       <div className="bg-white/80 p-4 rounded-2xl shadow pastel-card border">
@@ -106,9 +112,12 @@ export default function Budget() {
       </div>
     );
 
-  // Render
+  // --------------------
+  // MAIN UI RENDER
+  // --------------------
   return (
     <div className="bg-white/80 p-4 rounded-2xl shadow pastel-card border dark:bg-gray-800/60 dark:border-gray-700">
+
       {/* AI SMART BUDGET PANEL */}
       <div className="p-4 mb-4 rounded-2xl shadow-lg bg-gradient-to-br from-pink-100 to-blue-100 dark:from-gray-700 dark:to-gray-800">
         <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
@@ -116,8 +125,7 @@ export default function Budget() {
         </h3>
 
         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-          Enter how much you want to save each month. Our model will generate a
-          smart budget with recommended spending categories.
+          Enter how much you want to save each month. Our model will generate a smart budget with recommended spending categories.
         </p>
 
         <div className="flex gap-2 mb-3">
@@ -139,6 +147,7 @@ export default function Budget() {
 
         {statusMsg && <div className="text-sm text-red-500 mb-2">{statusMsg}</div>}
 
+        {/* AI BUDGET OUTPUT */}
         {aiBudget ? (
           <div className="mt-3 text-sm">
             <p className="font-semibold text-gray-800 dark:text-gray-100">
@@ -146,7 +155,8 @@ export default function Budget() {
             </p>
 
             <p className="text-gray-700 dark:text-gray-300 mb-2">
-              Avg Monthly Expense: ₹{aiBudget.avgExpense ?? "—"}
+              Avg Monthly Expense: ₹
+              {aiBudget.avgExpense ?? aiBudget.avgMonthlyExpense ?? "—"}
             </p>
 
             <h4 className="font-semibold text-gray-800 dark:text-gray-100">
@@ -156,9 +166,7 @@ export default function Budget() {
             <ul className="ml-3 text-gray-700 dark:text-gray-300">
               {aiBudget.suggested
                 ? Object.entries(aiBudget.suggested).map(([k, v]) => (
-                    <li key={k}>
-                      {k}: ₹{v}
-                    </li>
+                    <li key={k}>{k}: ₹{v}</li>
                   ))
                 : "—"}
             </ul>
@@ -167,14 +175,14 @@ export default function Budget() {
           <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
             Income: ₹{budget.income ?? 0}
             <br />
-            Avg Monthly Expense: ₹{predict?.predicted ?? 0}
+            Avg Monthly Expense: ₹{budget.avgExpense ?? 0}
             <br />
             Suggested Allocation: (Generate AI to see suggestion)
           </div>
         )}
       </div>
 
-      {/* Standard Budget Panel */}
+      {/* STANDARD BUDGET SUMMARY */}
       <div className="flex justify-between items-center">
         <div>
           <h3 className="font-bold text-lg text-gray-700 dark:text-gray-100">
@@ -193,7 +201,7 @@ export default function Budget() {
         </div>
       </div>
 
-      {/* Allocation + Charts */}
+      {/* RECOMMENDED ALLOCATION + PIE CHART */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <h4 className="font-semibold text-sm mb-2 text-gray-700 dark:text-gray-100">
@@ -226,7 +234,7 @@ export default function Budget() {
         </div>
       </div>
 
-      {/* Forecast */}
+      {/* FORECAST SECTION */}
       <div className="mt-6">
         <h4 className="font-semibold text-sm mb-2 text-gray-700 dark:text-gray-100">
           Monthly History
